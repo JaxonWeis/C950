@@ -1,16 +1,13 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+from Trucks import*
+import Packages
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
-
-
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    truck1 = Trucks(1)
+    truck2 = Trucks(2)
+    truck3 = Trucks(3)
+    truckList = [truck1, truck2, truck3]
+    packageHashTable = Packages.readPackageList()
+    truck1.loadPackage(packageHashTable[0])
+#    truck1.packageList[0]['status'] = 'onTruck' + str(truck1.id)
+    print(packageHashTable[0])
