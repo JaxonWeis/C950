@@ -3,17 +3,6 @@ import itertools
 import math
 
 
-def calulateMileage(packageList) -> object:
-    miles = 0
-    lastId = 0
-    for x in packageList:
-        miles += Destination.mileageTable[lastId][x.destinationId]
-        lastId = x.destinationId
-    miles += Destination.mileageTable[lastId][0]
-    miles = round(miles,2)
-    return miles
-
-
 class Trucks:
     global maxPackages
     global packageList
@@ -35,12 +24,14 @@ class Trucks:
         self.speed = 18
         self.id = id
         self.miles = 0;
-        self.status = 'loading'
-        self.arrivalTime = 0;
+        self.status = 'Loading'
+        self.arrivalTime = 480;
+        self.arrivalTimeHr = 8;
+        self.arrivalTimeMin = 0
         self.kg = 0
 #        print("Truck:" + str(self.id) + " Created.")
 
-    def toString(self) -> object:
+    def __str__(self):
         hr = math.floor(self.arrivalTime/60)
         min = self.arrivalTime%60
         myStr = 'TruckId:' + str(self.id) +\
@@ -49,9 +40,11 @@ class Trucks:
                 ':' + str(min) +\
                 ' Miles:' + str(self.miles) +\
                 ' KG:' + str(self.kg)
+        myStr += "\n\tRoute Mileage:" + str(calulateMileage(self.packageList))
         for x in self.packageList:
             myStr += "\n\t|-PackageId:" + str(x.id) + " Street:" + str(x.street) + " Status:" + str(x.status)
         return myStr
+
 
     def setStatus(self, status):
         self.status = status
@@ -90,24 +83,22 @@ class Trucks:
         lastId = 0;
         for x in self.packageList:
             miles += Destination.mileageTable[lastId][x.destinationId]
-            print(miles)
             time = math.ceil(miles/self.speed*60)
-            print(time)
             arriveTime = currentTime + time
-            print(arriveTime)
             arriveHr = math.floor(arriveTime/60)
             arrivemin = arriveTime%60
             if arrivemin < 10:
                 x.status = "Arrive @ " + str(arriveHr) + ":0" + str(arrivemin)
             else:
                 x.status = "Arrive @ " + str(arriveHr) + ":" + str(arrivemin)
-            print(x.status)
+        self.miles += calulateMileage(self.packageList)
         self.arrivalTime = currentTime + math.ceil(calulateMileage(self.packageList)/self.speed*60)
+        self.arrivalTimeHr = math.floor(self.arrivalTime / 60)
+        self.arrivalTimeMin = self.arrivalTime % 60
 
     def sortShortestNeighbor(self):
-        self.setStatus("Sorting")
+        self.setStatus("Sorted")
         self.algorithm = 'Nearest Neighbor'
-        print('Running Nearest Neighbor Sort')
         route = []
         shortestNeighbor = 0
         packageList = self.packageList
@@ -125,7 +116,6 @@ class Trucks:
             route.append(shortestNeighbor)
             packageList.remove(shortestNeighbor)
         self.packageList = route
-        self.miles += calulateMileage(self.packageList)
 
     def sortBruteForce(self):
         self.setStatus("Sorting")
@@ -149,6 +139,25 @@ class Trucks:
             if i % 1000000 == 0:
                 print("perm " + str(round((i/perm)*100,2)) + "% complete ")
         self.packageList = bestRoute
+
+global TruckList
+TruckList = []
+
+def CreateTrucks(num = 3):
+    for i in range(num):
+        TruckList.append(Trucks(i + 1))
+
+
+
+def calulateMileage(packageList) -> object:
+    miles = 0
+    lastId = 0
+    for x in packageList:
+        miles += Destination.mileageTable[lastId][x.destinationId]
+        lastId = x.destinationId
+    miles += Destination.mileageTable[lastId][0]
+    miles = round(miles,2)
+    return miles
 
 
 

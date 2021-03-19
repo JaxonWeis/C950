@@ -1,56 +1,5 @@
 import csv
-import math
-
-
-def readPackageList() -> object:
-    packageHashTable = []
-    with open('Packages.csv') as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        for row in csv_reader:
-            packageHashTable.append(Packages(row[0], row[1], row[2], row[3], row[4], row[5], row[6],
-                                             row[7], row[8], row[9], row[10]))
-    return packageHashTable
-
-
-def printPackageList(packageList):
-    for x in packageList:
-        print(x.toString())
-
-
-
-def printAvailablePackageList(packageList, currentTime):
-    i = 0
-    hr = math.floor(currentTime / 60)
-    min = currentTime % 60
-    print("Package List @" + str(hr) + ":" + str(min))
-    for x in packageList:
-        if currentTime >= ((x.availableTimeHr * 60) + x.availableTimeMin):
-            if x.status == 'hub':
-                print("\t-id:" + str(x.id) + " Street:" + str(x.street) + " ", end=' | ')
-                if not x.deliverTimeHr == 'EOD':
-                    print("DeliveryTime:" + str(x.availableTimeHr) + ":" + str(x.deliverTimeMin), end=' | ')
-                if not x.notes == 'none':
-                    print("Notes:" + x.notes, end=' | ')
-        print("")
-
-
-def isDeliveryDone(packageList) -> object:
-    num = 0
-    i = 0
-    while len(packageList) > i:
-        if 'delivered' not in packageList[i].status:
-            return False
-        i += 1
-    return True
-
-
-def matchPackagesToDestination(packageList, destinationList):
-    for x in packageList:
-        for y in destinationList:
-            if x.street == 'null':
-                x.destinationId = 'null'
-            elif x.street == y['street']:
-                x.destinationId = y['id']
+import Destination
 
 
 class Packages:
@@ -69,7 +18,8 @@ class Packages:
     global notes
 
     def __init__(self, id, street, city, state, zip, availableTimeHr, availableTimeMin, deliverTimeHr, deliverTimeMin, kg, notes):
-        self.id = id
+        global myHash
+        self.id = int(id)
         self.street = street
         self.city = city
         self.state = state
@@ -79,9 +29,13 @@ class Packages:
         self.deliverTimeHr = deliverTimeHr
         self.deliverTimeMin = deliverTimeMin
         self.kg = int(kg)
-        self.status = 'hub'
-        self.destinationId = 0
+        self.destinationId = Destination.getIdByStreet(self.street)
         self.notes = notes
+        availableTime = self.availableTimeHr*60 + self.availableTimeMin
+        if (availableTime > 480) or self.destinationId == -1:
+            self.status = 'Not Availible'
+        else:
+            self.status = 'hub'
 #        print("Package:" + self.id + " Created.")
 
     def toString(self) -> object:
@@ -89,8 +43,111 @@ class Packages:
         x += " DestinationId:" + str(self.destinationId)
         if not self.deliverTimeHr == 'EOD':
             x += " DeliveryTime:" + str(self.deliverTimeHr) + ':' + str(self.deliverTimeMin)
+        x += " Status:" + str(self.status)
         if not self.notes == 'none':
             x += " Notes:" + str(self.notes)
-        x += " Status:" + str(self.status)
         return x
 
+
+class ChainingHashTable:
+
+    # Constructor default size is 10.
+    def __init__(self, capacity=10):
+        self.table = []
+        self.itemcount = 0;
+
+        # Creates a list in every bucket
+        for i in range(capacity):
+            self.table.append([])
+
+    def __len__(self):
+        return self.itemcount
+
+    def insert(self, package):
+        bucket = hash(package.id) % len(self.table)
+        bucketList = self.table[bucket]
+
+        for item in bucketList:
+            if item.id == package.id:
+                item = package
+                return True
+
+        bucketList.append(package)
+        self.itemcount += 1
+        return True
+
+    def search(self, id):
+        bucket = hash(id) % len(self.table)
+        bucketList = self.table[bucket]
+
+        for item in bucketList:
+            if item.id == id:
+                return item
+        return None
+
+    def remove(self, package):
+        bucket = hash(package.id) % len(self.table)
+        bucketList = self.table[bucket]
+
+        for item in bucketList:
+            if item.id == package.id:
+                bucketList.remove(item)
+                self.itemcount -= 1
+
+    def printAll(self):
+        index = 1
+        count = 0
+        while count < len(self):
+            if not self.search(index) is None:
+                print(self.search(index).toString())
+                count += 1
+            index += 1
+
+    def printAllAvailible(self):
+        index = 1
+        count = 0
+        while count < len(self):
+            if not self.search(index) is None:
+                if self.search(index).status == 'hub':
+                    print(self.search(index).toString())
+                count += 1
+            index += 1
+
+
+global hashTable
+hashTable = ChainingHashTable()
+
+
+def readPackageList():
+    global hashTable
+    with open('Packages.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+            item = Packages(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
+            hashTable.insert(item)
+
+
+def printPackageList():
+    global hashTable
+    for bucketList in hashTable.table:
+        for item in bucketList:
+            print(item.toString())
+
+def checkPackageList(currentTime):
+    global hashTable
+    for bucketList in hashTable.table:
+        for item in bucketList:
+            # I only want to check on non available packages
+            if item.status == 'Not Availible':
+                timeAvailible = (item.availableTimeHr * 60) + item.availableTimeMin
+                # if current time is past or equal to time availible change status to hub
+                if currentTime >= timeAvailible:
+                    item.status = 'hub'
+                # if item number 9 is past 10:20am then update the address
+                if item.id == 9 and currentTime >= 620:
+                    item.street = '410 S State St'
+                    item.city = 'Salt Lake City'
+                    item.state = 'UT'
+                    item.Zip = '84111'
+                    item.destinationId = 19
+                    item.notes = 'Address fixed!'

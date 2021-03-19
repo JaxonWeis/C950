@@ -15,9 +15,9 @@ def setTime(hr, min):
     hr = math.floor(currentTime/60)
     min = currentTime % 60
     if min < 10:
-        print("CurrentTime is " + str(hr) + ":0" + str(min))
+        print("Current Time is " + str(hr) + ":0" + str(min))
     else:
-        print("CurrentTime is " + str(hr) + ":0" + str(min))
+        print("Current Time is " + str(hr) + ":" + str(min))
 
 
 def setTime(time):
@@ -28,7 +28,7 @@ def setTime(time):
     if min < 10:
         print("CurrentTime is " + str(hr) + ":0" + str(min))
     else:
-        print("CurrentTime is " + str(hr) + ":0" + str(min))
+        print("CurrentTime is " + str(hr) + ":" + str(min))
 
 
 def addMinutes(mins):
@@ -39,93 +39,97 @@ def addMinutes(mins):
     if min < 10:
         print("CurrentTime is " + str(hr) + ":0" + str(min))
     else:
-        print("CurrentTime is " + str(hr) + ":0" + str(min))
+        print("CurrentTime is " + str(hr) + ":" + str(min))
 
 
 if __name__ == '__main__':
-    truck1 = Trucks.Trucks(1)
-    truck2 = Trucks.Trucks(2)
-    truck3 = Trucks.Trucks(3)
-    truckList = [truck1, truck2, truck3]
+    Trucks.CreateTrucks()
     Destination.readDestinations()
-    packageHashTable = Packages.readPackageList()
-    Packages.matchPackagesToDestination(packageHashTable,Destination.destinations)
+    Packages.readPackageList()
 
     while True:
-        if currentTime > 620:
-            packageHashTable[8].street = '410 S State St'
-            packageHashTable[8].city = 'Salt Lake City'
-            packageHashTable[8].state = 'UT'
-            packageHashTable[8].Zip = '84111'
-            packageHashTable[8].destinationId = 19
-            packageHashTable[8].notes = 'Address fixed!'
-
-        Packages.printAvailablePackageList(packageHashTable, currentTime)
+        Packages.checkPackageList(currentTime)
+        print("\n\nv - View all Packages")
         print("l - Load Packages")
         print("1,2,3 - View Trucks 1,2,3")
-        print("q,w,e - Send Trucks 1,2,3 to route")
+        print("s - sort Truck with algorithm")
+        print("d - Dispatch Truck to route")
         print("j - Jump to Truck Finished Time")
-        print("t - Show Complete Package List")
-        print("Current Total Mileage: " + str(truck1.miles + truck2.miles + truck3.miles))
+        miles = 0
+        for truck in Trucks.TruckList:
+            miles += truck.miles
+        print("Current Total Mileage: " + str(miles))
+        if currentTime % 60 < 10:
+            print("Current Time is: " + str(math.floor(currentTime / 60)) + ":0" + str(currentTime % 60))
+        else:
+            print("Current Time is: " + str(math.floor(currentTime / 60)) + ":" + str(currentTime % 60))
         userInput = input("\nChoose menu item:")
-        if userInput == 'l':
-            userInputPackage = input("Which package id?")
-            userInputTruck = input("Which Truck 1,2,3?")
-            print("Loading package id:" + userInputPackage + " onto truck:" + userInputTruck)
-            truckList[int(userInputTruck) - 1].loadPackage(packageHashTable[int(userInputPackage) - 1])
-            input('Hit Enter to Continue')
 
-        elif userInput == '1':
-            print(truck1.toString())
-            input('Hit Enter to Continue')
+        if userInput == 'v':
+            Packages.hashTable.printAll()
+            input("Press Enter.")
 
-        elif userInput == '2':
-            print(truck2.toString())
-            input('Hit Enter to Continue')
+        elif userInput == 'l':
+            Packages.hashTable.printAllAvailible()
+            packageInput = input("\nChoose which Package?")
+            for truck in Trucks.TruckList:
+                if not truck.isFull():
+                    print("Truck" + str(truck.id) + " has Package Count:" + str(truck.getPackageNum()))
+            truckInput = input("\nChoose which Truck?")
+            if Packages.hashTable.search(int(packageInput)).status == 'hub':
+                if not Trucks.TruckList[int(truckInput) - 1].isFull():
+                    Trucks.TruckList[int(truckInput) - 1].loadPackage(Packages.hashTable.search(int(packageInput)))
+                    input("Package Loaded!\nPress Enter.")
+                else:
+                    input("Package NOT Loaded\nTruck is Full\nPress Enter.")
+            else:
+                input("Package Not Loaded\nPackage NOT Availible\nPress Enter.")
 
-        elif userInput == '3':
-            print(truck3.toString())
-            input('Hit Enter to Continue')
+        elif userInput.isnumeric():
+            if int(userInput) <= len(Trucks.TruckList):
+                print(Trucks.TruckList[int(userInput)-1])
+                input("\nPress Enter.")
 
-        elif userInput == 'q':
-            truck1.sortShortestNeighbor()
-            truck1.drive(currentTime)
-            print(truck1.toString())
-            input('Hit Enter to Continue')
+        elif userInput == 's':
+            for truck in Trucks.TruckList:
+                if truck.status == "Loading":
+                    if not truck.isEmpty():
+                        print("Truck" + str(truck.id) + " has Package Count:" + str(truck.getPackageNum()))
+                    else:
+                        print("Truck" + str(truck.id) + " IS EMPTY")
+                else:
+                    print("Truck" + str(truck.id) + " IS NOT AT HUB")
 
-        elif userInput == 'w':
-            truck2.sortShortestNeighbor()
-            truck2.drive(currentTime)
-            print(truck2.toString())
-            input('Hit Enter to Continue')
+            truckInput = input("\nChoose which Truck?")
+            print("\n1 - Shortest Neighbor")
+            algorithm = input("\nWhich algorithm?")
+            if truckInput.isnumeric():
+                truckId = int(truckInput)-1
+                if algorithm == '1':
+                    Trucks.TruckList[truckId].sortShortestNeighbor()
 
-        elif userInput == 'e':
-            truck3.sortShortestNeighbor()
-            truck3.drive(currentTime)
-            print(truck3.toString())
-            input('Hit Enter to Continue')
+        elif userInput == 'd':
+            for truck in Trucks.TruckList:
+                if truck.status == "Sorted":
+                    print("Truck" + str(truck.id) + " has Package Count:" + str(truck.getPackageNum()))
+                else:
+                    print("Truck" + str(truck.id) + " NOT BEEN SORTED")
+            truckInput = input("\nChoose which Truck?")
+            if truckInput.isnumeric():
+                truckId = int(truckInput)-1
+                Trucks.TruckList[truckId].drive(currentTime)
+                print(Trucks.TruckList[truckId])
+                input("Truck Left the Hub!\nPress Enter.")
 
         elif userInput == 'j':
-            userInput = input("Which Truck 1,2,3?")
-            if userInput == '1':
-                setTime(truck1.arrivalTime)
-            elif userInput == '2':
-                setTime(truck2.arrivalTime)
-            elif userInput == '3':
-                setTime(truck3.arrivalTime)
-            truck1.isDelivered(currentTime)
-            truck2.isDelivered(currentTime)
-            truck3.isDelivered(currentTime)
-            input('Hit Enter to Continue')
-
-        elif userInput == 't':
-            Packages.printPackageList(packageHashTable)
-            input('Hit Enter to Continue')
-
-
-
-
-
-
-
-
+            for truck in Trucks.TruckList:
+                if truck.status == "In Transit":
+                    print("Truck" + str(truck.id) + " Finish Time:" + str(truck.arrivalTimeHr) + ":"  + str(truck.arrivalTimeMin))
+                else:
+                    print("Truck" + str(truck.id) + " TRUCK NOT DISPATCHED!")
+            truckInput = input("Which Truck?")
+            if truckInput is not None:
+                setTime(Trucks.TruckList[int(truckInput)-1].arrivalTime)
+                input("Press Enter.")
+                for truck in Trucks.TruckList:
+                    truck.isDelivered(currentTime)
