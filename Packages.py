@@ -17,8 +17,8 @@ class Packages:
     global status
     global notes
 
+    # Package Constructor
     def __init__(self, id, street, city, state, zip, availableTimeHr, availableTimeMin, deliverTimeHr, deliverTimeMin, kg, notes):
-        global myHash
         self.id = int(id)
         self.street = street
         self.city = city
@@ -36,9 +36,9 @@ class Packages:
             self.status = 'Not Availible'
         else:
             self.status = 'hub'
-#        print("Package:" + self.id + " Created.")
 
-    def toString(self) -> object:
+    # Converting a Package to string
+    def __str__(self):
         x = "id:" + str(self.id)
         x += " DestinationId:" + str(self.destinationId)
         if not self.deliverTimeHr == 'EOD':
@@ -48,7 +48,7 @@ class Packages:
             x += " Notes:" + str(self.notes)
         return x
 
-
+# Hash table class
 class ChainingHashTable:
 
     # Constructor default size is 10.
@@ -60,9 +60,11 @@ class ChainingHashTable:
         for i in range(capacity):
             self.table.append([])
 
+    # used to get the number of items in the hash table
     def __len__(self):
         return self.itemcount
 
+    # insert a Package into the hash table with the id as the key O(1)
     def insert(self, package):
         bucket = hash(package.id) % len(self.table)
         bucketList = self.table[bucket]
@@ -76,6 +78,7 @@ class ChainingHashTable:
         self.itemcount += 1
         return True
 
+    # finding a package in a hash table with the id as the key O(number of item in bucket)
     def search(self, id):
         bucket = hash(id) % len(self.table)
         bucketList = self.table[bucket]
@@ -85,6 +88,7 @@ class ChainingHashTable:
                 return item
         return None
 
+    # Removing a package from the hash table with the id as a key O(number of item in bucket)
     def remove(self, package):
         bucket = hash(package.id) % len(self.table)
         bucketList = self.table[bucket]
@@ -94,30 +98,33 @@ class ChainingHashTable:
                 bucketList.remove(item)
                 self.itemcount -= 1
 
+    # Print all packages in hash in order O(n)
     def printAll(self):
         index = 1
         count = 0
         while count < len(self):
             if not self.search(index) is None:
-                print(self.search(index).toString())
+                print(self.search(index))
                 count += 1
             index += 1
 
+    # Print all packages availible O(n)
     def printAllAvailible(self):
         index = 1
         count = 0
         while count < len(self):
             if not self.search(index) is None:
                 if self.search(index).status == 'hub':
-                    print(self.search(index).toString())
+                    print(self.search(index))
                 count += 1
             index += 1
 
 
+# creating a global hash table
 global hashTable
 hashTable = ChainingHashTable()
 
-
+# read the package list
 def readPackageList():
     global hashTable
     with open('Packages.csv') as csv_file:
@@ -126,13 +133,14 @@ def readPackageList():
             item = Packages(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
             hashTable.insert(item)
 
-
+# print all the packages in hash table no order O(n)
 def printPackageList():
     global hashTable
     for bucketList in hashTable.table:
         for item in bucketList:
-            print(item.toString())
+            print(item)
 
+# check the package list for late flight arrivals and updated address O(n)
 def checkPackageList(currentTime):
     global hashTable
     for bucketList in hashTable.table:
@@ -141,8 +149,9 @@ def checkPackageList(currentTime):
             if item.status == 'Not Availible':
                 timeAvailible = (item.availableTimeHr * 60) + item.availableTimeMin
                 # if current time is past or equal to time availible change status to hub
-                if currentTime >= timeAvailible:
+                if currentTime >= timeAvailible and not item.destinationId == -1:
                     item.status = 'hub'
+                    item.notes = "Arrived on Flight"
                 # if item number 9 is past 10:20am then update the address
                 if item.id == 9 and currentTime >= 620:
                     item.street = '410 S State St'
@@ -150,4 +159,5 @@ def checkPackageList(currentTime):
                     item.state = 'UT'
                     item.Zip = '84111'
                     item.destinationId = 19
+                    item.status = 'hub'
                     item.notes = 'Address fixed!'

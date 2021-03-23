@@ -6,6 +6,7 @@ destinations = []
 mileageTable = []
 
 
+# Read the package list
 def readDestinations():
     with open('Destinations.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -19,6 +20,7 @@ def readDestinations():
                                  float(row[29])])
 
 
+# get the id number by street address
 def getIdByStreet(street) -> object:
     for x in destinations:
         if x['street'] == street:
