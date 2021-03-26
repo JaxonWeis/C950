@@ -17,7 +17,7 @@ class Packages:
     global status
     global notes
 
-    # Package Constructor
+    # Package Constructor O(d) = destinations
     def __init__(self, id, street, city, state, zip, availableTimeHr, availableTimeMin, deliverTimeHr, deliverTimeMin, kg, notes):
         self.id = int(id)
         self.street = street
@@ -29,7 +29,7 @@ class Packages:
         self.deliverTimeHr = deliverTimeHr
         self.deliverTimeMin = deliverTimeMin
         self.kg = int(kg)
-        self.destinationId = Destination.getIdByStreet(self.street)
+        self.destinationId = Destination.getIdByStreet(self.street)  # O(d) d = destinations
         self.notes = notes
         availableTime = self.availableTimeHr*60 + self.availableTimeMin
         if (availableTime > 480) or self.destinationId == -1:
@@ -124,14 +124,16 @@ class ChainingHashTable:
 global hashTable
 hashTable = ChainingHashTable()
 
-# read the package list
+
+# read the package list O(p*d) p = packages d = destinations
 def readPackageList():
     global hashTable
     with open('Packages.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
-        for row in csv_reader:
-            item = Packages(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])
-            hashTable.insert(item)
+        for row in csv_reader:  # O(p) p = packages
+            item = Packages(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10])  # O(d) d = destinations
+            hashTable.insert(item)  # O(1)
+
 
 # print all the packages in hash table no order O(n)
 def printPackageList():
@@ -139,6 +141,7 @@ def printPackageList():
     for bucketList in hashTable.table:
         for item in bucketList:
             print(item)
+
 
 # check the package list for late flight arrivals and updated address O(n)
 def checkPackageList(currentTime):

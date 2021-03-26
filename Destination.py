@@ -6,21 +6,21 @@ destinations = []
 mileageTable = []
 
 
-# Read the package list
+# Read the package list O(d^2) d = destinations
 def readDestinations():
     with open('Destinations.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
-        for row in csv_reader:
-            destinations.append({'id': int(row[0]), 'street': row[1], 'zip': int(row[2])})
-            mileageTable.append([float(row[3]), float(row[4]), float(row[5]), float(row[6]), float(row[7]), float(row[8]),
-                                 float(row[9]), float(row[10]), float(row[11]), float(row[12]), float(row[13]),
-                                 float(row[14]), float(row[15]), float(row[16]), float(row[17]), float(row[18]),
-                                 float(row[19]), float(row[20]), float(row[21]), float(row[22]), float(row[23]),
-                                 float(row[26]), float(row[25]), float(row[26]), float(row[27]), float(row[28]),
-                                 float(row[29])])
+        for row in csv_reader:  # O(d) d = destinations
+            destinations.append({'id': int(row[0]), 'street': row[1], 'zip': int(row[2])})  # O(1)
+            miles = []
+            i = 3
+            while i < len(row):  # O(d) d = destinations
+                miles.append(float(row[i]))  # O(1)
+                i += 1
+            mileageTable.append(miles)  # O(1)
 
 
-# get the id number by street address
+# get the id number by street address O(d) d = destinations
 def getIdByStreet(street) -> object:
     for x in destinations:
         if x['street'] == street:
