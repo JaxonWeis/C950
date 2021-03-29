@@ -98,7 +98,7 @@ class ChainingHashTable:
                 bucketList.remove(item)
                 self.itemcount -= 1
 
-    # Print all packages in hash in order O(n)
+    # Print all packages in hash in order O(p) p = packages
     def printAll(self):
         index = 1
         count = 0
